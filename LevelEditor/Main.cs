@@ -57,6 +57,13 @@ namespace LevelEditor.Main
 
             return lines;
         }
+        public void SetStartPos(Vector2 pos)
+        {
+            GameObject pd = GameObject.Find("Death Collider");
+            PlayerDeath pds = pd.GetComponent<PlayerDeath>();
+            var field = typeof(PlayerDeath).GetField("playerStartPos", BindingFlags.NonPublic | BindingFlags.Instance);
+            field.SetValue(pds, pos);
+        }
 
         public List<string> LoadTilePosFile(string folderName)
         {
@@ -96,6 +103,9 @@ namespace LevelEditor.Main
             // Create a list to hold the tiles
             List<Tile> palette = new List<Tile>();
 
+            Tile emptyTile = ScriptableObject.CreateInstance<Tile>();
+            emptyTile.sprite = null; // No sprite for the empty tile
+            palette.Add(emptyTile);
             // Check if the folder exists
             if (Directory.Exists(modsFolder))
             {
@@ -133,7 +143,7 @@ namespace LevelEditor.Main
             {
                 Debug.LogWarning($"Palette folder '{modsFolder}' not found.");
             }
-
+            MelonLogger.Msg(palette.Count);
             return palette;
         }
 
@@ -208,7 +218,7 @@ namespace LevelEditor.Main
         public void SetAll()
         {
             MelonLogger.Msg("SetAll method called.");
-
+            SetStartPos(new Vector2(float.Parse(LoadRules("Test")[3]), float.Parse(LoadRules("Test")[4])));
             // Try to find the Tilemap GameObject
             GameObject tilemapGameObject = GameObject.Find("Tilemap Gameobject");
             GameObject coverT = GameObject.Find("Ground Cover");
@@ -250,14 +260,17 @@ namespace LevelEditor.Main
                 {
                     if (i < tiles.Count && j < tiles[i].Count)
                     {
-                        tileMap.SetTile(new Vector3Int(j, i, 0), pallete[tiles[i][j]]);
-                        gct.SetTile(new Vector3Int(j, i, 0), gcc.groundTile);
-                        GameObject temp = new GameObject();
-                        temp.transform.parent = tileMap.transform;
-                        temp.transform.localScale = new Vector3(0.5f, 1, 0.5f);
-                        temp.tag = "Rubber";
-                        temp.layer = 8;
-                        temp.transform.position = new Vector3Int(j, i, 0);
+                        if (tiles[i][j] != 0)
+                        {
+                            tileMap.SetTile(new Vector3Int(j, i, 0), pallete[tiles[i][j]]);
+                            gct.SetTile(new Vector3Int(j, i, 0), gcc.groundTile);
+                            GameObject temp = new GameObject();
+                            temp.transform.parent = tileMap.transform;
+                            temp.transform.localScale = new Vector3(0.5f, 1, 0.5f);
+                            temp.tag = "Metal";
+                            temp.layer = 8;
+                            temp.transform.position = new Vector3Int(j, i, 0);
+                        }
                     }
                     else
                     {
@@ -265,7 +278,8 @@ namespace LevelEditor.Main
                     }
                 }
             }
-
+            tileMap.gameObject.transform.position = new Vector2(-0.5f, -0.5f);
+            /*tileMap.gameObject.GetComponent<TilemapCollider2D>().enabled = true;
             GameObject cgc = GameObject.Find("Ground Cover");
             if (cgc != null)
             {
@@ -295,7 +309,7 @@ namespace LevelEditor.Main
                 MelonLogger.Warning("Ground cover object is null.");
             }
             GameObject cgcm = GameObject.Find("Ground Cover Metal");
-            if (cgc != null)
+            if (cgcm != null)
             {
                 GroundCoverController groundCoverController2 = cgcm.GetComponent<GroundCoverController>();
                 if (groundCoverController2 != null)
@@ -329,8 +343,13 @@ namespace LevelEditor.Main
             cgcm.GetComponent<TilemapCollider2D>().enabled = false;
             cgcm.GetComponent<TilemapCollider2D>().enabled = true;
             cgcm.GetComponent<CompositeCollider2D>().enabled = false;
-            cgcm.GetComponent<CompositeCollider2D>().enabled = true;
-            
+            cgcm.GetComponent<CompositeCollider2D>().enabled = true;*/
+            GameObject p = GameObject.Find("Player B3");
+            Debug.Log("After player objkect");
+            Rigidbody2D prb = p.GetComponent<Rigidbody2D>();
+            Debug.Log("After player rb");
+            prb.gravityScale = 2;
+            Debug.Log(prb.gravityScale);
         }
         public int GetTileCount(Tilemap tilemap)
         {
@@ -389,9 +408,16 @@ namespace LevelEditor.Main
             c2.SetActive(false);
             GameObject c3 = GameObject.Find("Checkpoint (3)");
             c3.SetActive(false);
+            Debug.Log("Before player");
             GameObject p = GameObject.Find("Player B3");
+            Debug.Log("After player objkect");
             Rigidbody2D prb = p.GetComponent<Rigidbody2D>();
+            Debug.Log("After player rb");
             prb.gravityScale = 2;
+            Debug.Log(prb == null);
+            Debug.Log(p == null);
+            Debug.Log(prb.gravityScale);
+            Debug.Log("After set GScale");
         }
 
         public override void OnUpdate()
@@ -399,11 +425,26 @@ namespace LevelEditor.Main
             if (Input.GetKeyDown(KeyCode.Y))
             {
                 SceneManager.LoadScene("Moonlight District");
+                GameObject p = GameObject.Find("Player B3");
+                Debug.Log("After player objkect");
+                Rigidbody2D prb = p.GetComponent<Rigidbody2D>();
+                Debug.Log("After player rb");
+                prb.gravityScale = 2;
+                Debug.Log(prb.gravityScale);
             }
             if (Input.GetKeyDown(KeyCode.T))
             {
                 MelonLogger.Msg("Key T pressed");
+                GameObject p = GameObject.Find("Player B3");
+                Debug.Log("After player objkect");
+                Rigidbody2D prb = p.GetComponent<Rigidbody2D>();
+                Debug.Log("After player rb");
+                prb.gravityScale = 2;
+                Debug.Log(prb.gravityScale);
                 SetAll();
+                GameObject pd = GameObject.Find("Death Collider");
+                PlayerDeath pds = pd.GetComponent<PlayerDeath>();
+                pds.DieSilent();
             }
         }
     }
