@@ -10,6 +10,7 @@ using System.Runtime.ConstrainedExecution;
 using UnityEngine.SceneManagement;
 using System.Reflection;
 using System.Globalization;
+using System.Collections;
 
 namespace LevelEditor.Main
 {
@@ -21,6 +22,7 @@ namespace LevelEditor.Main
         public Tilemap InvisWalls; // Grid > Tilemap Invisible Wall
         public int width;
         public int height;
+        public GameObject win;
 
         public override void OnApplicationStart()
         {
@@ -220,6 +222,12 @@ namespace LevelEditor.Main
             MelonLogger.Msg("SetAll method called.");
             SetStartPos(new Vector2(float.Parse(LoadRules("Test")[3]), float.Parse(LoadRules("Test")[4])));
             // Try to find the Tilemap GameObject
+            string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Mods", "Levels", "Test", "other.txt");
+            string[] lines = File.ReadAllLines(filePath);
+            foreach (string line in lines)
+            {
+                ProcessLine(line);
+            }
             GameObject tilemapGameObject = GameObject.Find("Tilemap Gameobject");
             GameObject coverT = GameObject.Find("Ground Cover");
 
@@ -374,6 +382,55 @@ namespace LevelEditor.Main
             }
             return tileCount;
         }
+        void ProcessLine(string line)
+        {
+            // Split the line by commas
+            string[] parts = line.Split(',');
+
+            if (parts.Length != 3)
+            {
+                Debug.LogError($"Invalid line format: {line}");
+                return;
+            }
+
+            // Parse values
+            string command = parts[0].Trim();
+            if (!int.TryParse(parts[1].Trim(), out int param1) || !int.TryParse(parts[2].Trim(), out int param2))
+            {
+                Debug.LogError($"Invalid numeric values in line: {line}");
+                return;
+            }
+
+            // Handle the command
+            switch (command.ToLower())
+            {
+                case "win":
+                    HandleWin(param1, param2);
+                    break;
+                case "checkpoint":
+                    HandleCheckpoint(param1, param2);
+                    break;
+                default:
+                    Debug.LogWarning($"Unknown command: {command}");
+                    break;
+            }
+        }
+
+        // Example functions to handle commands
+        void HandleWin(int param1, int param2)
+        {
+            GameObject temp = GameObject.Find("Win");
+            temp.transform.position = new Vector2(param1, param2);
+            temp.SetActive(true);
+        }
+
+        void HandleCheckpoint(int param1, int param2)
+        {
+            GameObject checkPoint = GameObject.Find("Checkpoint");
+            GameObject cp = GameObject.Instantiate(checkPoint);
+            cp.transform.position = new Vector2(param1, param2);
+            cp.SetActive(true);
+        }
         public void PrepMD()
         {
             GameObject tiwd = GameObject.Find("Tilemap Invisible Wall Death");
@@ -413,34 +470,68 @@ namespace LevelEditor.Main
             Debug.Log("After player objkect");
             Rigidbody2D prb = p.GetComponent<Rigidbody2D>();
             Debug.Log("After player rb");
-            prb.gravityScale = 2;
+            prb.gravityScale = 2; 
+            var playerSwimming = p.GetComponent("PlayerSwimming");
+            if (playerSwimming == null)
+            {
+                Debug.LogError("PlayerSwimming component not found on Player B3!");
+                return;
+            }
+            FieldInfo startGravField = playerSwimming.GetType().GetField("startGrav", BindingFlags.NonPublic | BindingFlags.Instance);
+            if (startGravField == null)
+            {
+                Debug.LogError("Private field 'startGrav' not found in PlayerSwimming!");
+                return;
+            }
+
+            // Set the value of the private field
+            startGravField.SetValue(playerSwimming, 2f);
+            GameObject glider = GameObject.Find("Star Screamer");
+            Shift_StarScreamer gs = glider.GetComponent<Shift_StarScreamer>();
+            FieldInfo defaultGravField = gs.GetType().GetField("defaultGravity", BindingFlags.NonPublic | BindingFlags.Instance);
+            defaultGravField.SetValue(gs, 2f);
             Debug.Log(prb == null);
             Debug.Log(p == null);
             Debug.Log(prb.gravityScale);
             Debug.Log("After set GScale");
         }
+        public void StartLoadAndGetWin()
+        {
+            // Start the coroutine to load and fetch the "Win" GameObject
+            MelonCoroutines.Start(LoadSceneAndGetWin());
+        }
+
+        private IEnumerator LoadSceneAndGetWin()
+        {
+            // Load scene asynchronously
+            AsyncOperation asyncLoad = SceneManager.LoadSceneAsync(1);
+
+            // Wait until the scene is fully loaded
+            while (!asyncLoad.isDone)
+            {
+                yield return null;
+            }
+
+            // Try to find the "Win" GameObject
+            GameObject winObject = GameObject.Find("Win");
+            GameObject.DontDestroyOnLoad(winObject);
+
+            // Optionally, load back the original scene or perform other operations
+            SceneManager.LoadScene("Moonlight District");
+            Debug.Log($"Win is now {(win != null ? "not null" : "null")}");
+        }
+
 
         public override void OnUpdate()
         {
             if (Input.GetKeyDown(KeyCode.Y))
             {
-                SceneManager.LoadScene("Moonlight District");
-                GameObject p = GameObject.Find("Player B3");
-                Debug.Log("After player objkect");
-                Rigidbody2D prb = p.GetComponent<Rigidbody2D>();
-                Debug.Log("After player rb");
-                prb.gravityScale = 2;
-                Debug.Log(prb.gravityScale);
+                StartLoadAndGetWin();
+                MelonLogger.Msg(win != null);
             }
             if (Input.GetKeyDown(KeyCode.T))
             {
                 MelonLogger.Msg("Key T pressed");
-                GameObject p = GameObject.Find("Player B3");
-                Debug.Log("After player objkect");
-                Rigidbody2D prb = p.GetComponent<Rigidbody2D>();
-                Debug.Log("After player rb");
-                prb.gravityScale = 2;
-                Debug.Log(prb.gravityScale);
                 SetAll();
                 GameObject pd = GameObject.Find("Death Collider");
                 PlayerDeath pds = pd.GetComponent<PlayerDeath>();
