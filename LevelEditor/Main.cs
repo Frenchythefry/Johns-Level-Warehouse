@@ -10,6 +10,7 @@ using System.Collections;
 using UnityEngine.UI;
 using TMPro;
 using HarmonyLib;
+using static UnityEngine.GraphicsBuffer;
 
 namespace LevelEditor.Main
 {
@@ -271,6 +272,7 @@ namespace LevelEditor.Main
             Tile emptyTile = ScriptableObject.CreateInstance<Tile>();
             emptyTile.sprite = null; // No sprite for the empty tile
             palette.Add(emptyTile);
+
             // Check if the folder exists
             if (Directory.Exists(modsFolder))
             {
@@ -286,9 +288,12 @@ namespace LevelEditor.Main
                         Texture2D texture = new Texture2D(2, 2);
                         if (texture.LoadImage(fileData))
                         {
-                            // Create a Sprite from the Texture2D
+                            // Calculate Pixels Per Unit to normalize the sprite's visual size
+                            float pixelsPerUnit = texture.width; // Assume width defines the scaling; ensures 1:1 images have 100x100 units
+
+                            // Create a Sprite from the Texture2D with the calculated Pixels Per Unit
                             Rect rect = new Rect(0, 0, texture.width, texture.height);
-                            Sprite sprite = Sprite.Create(texture, rect, new Vector2(0.5f, 0.5f));
+                            Sprite sprite = Sprite.Create(texture, rect, new Vector2(0.5f, 0.5f), pixelsPerUnit);
 
                             // Create a Tile from the Sprite
                             Tile tile = ScriptableObject.CreateInstance<Tile>();
@@ -308,6 +313,7 @@ namespace LevelEditor.Main
             {
                 Debug.LogWarning($"Palette folder '{modsFolder}' not found.");
             }
+
             MelonLogger.Msg(palette.Count);
             return palette;
         }
@@ -582,6 +588,7 @@ namespace LevelEditor.Main
         void HandleWin(int param1, int param2)
         {
             GameObject temp = GameObject.Find("Win");
+            SceneManager.MoveGameObjectToScene(temp, SceneManager.GetActiveScene());
             temp.transform.position = new Vector2(param1, param2);
             temp.SetActive(true);
         }
