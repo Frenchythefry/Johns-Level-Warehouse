@@ -54,6 +54,10 @@
     <Reference Include="Unity.InputSystem">
       <HintPath>E:\SteamLibrary\steamapps\common\Thunder Jumper\Thunder Jumper_Data\Managed\Unity.InputSystem.dll</HintPath>
     </Reference>
+    <Reference Include="Unity.TextMeshPro, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>E:\SteamLibrary\steamapps\common\Thunder Jumper\Thunder Jumper_Data\Managed\Unity.TextMeshPro.dll</HintPath>
+    </Reference>
     <Reference Include="UnityEngine">
       <HintPath>E:\SteamLibrary\steamapps\common\Thunder Jumper\Thunder Jumper_Data\Managed\UnityEngine.dll</HintPath>
     </Reference>
@@ -67,6 +71,10 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>E:\SteamLibrary\steamapps\common\Thunder Jumper\Thunder Jumper_Data\Managed\UnityEngine.ImageConversionModule.dll</HintPath>
     </Reference>
+    <Reference Include="UnityEngine.IMGUIModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>E:\SteamLibrary\steamapps\common\Thunder Jumper\Thunder Jumper_Data\Managed\UnityEngine.IMGUIModule.dll</HintPath>
+    </Reference>
     <Reference Include="UnityEngine.InputLegacyModule">
       <HintPath>E:\SteamLibrary\steamapps\common\Thunder Jumper\Thunder Jumper_Data\Managed\UnityEngine.InputLegacyModule.dll</HintPath>
     </Reference>
@@ -76,6 +84,10 @@
     <Reference Include="UnityEngine.Physics2DModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>E:\SteamLibrary\steamapps\common\Thunder Jumper\Thunder Jumper_Data\Managed\UnityEngine.Physics2DModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.TextRenderingModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>E:\SteamLibrary\steamapps\common\Thunder Jumper\Thunder Jumper_Data\Managed\UnityEngine.TextRenderingModule.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.TilemapModule">
       <HintPath>E:\SteamLibrary\steamapps\common\Thunder Jumper\Thunder Jumper_Data\Managed\UnityEngine.TilemapModule.dll</HintPath>

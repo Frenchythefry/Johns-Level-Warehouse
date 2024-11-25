@@ -3,14 +3,13 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 using MelonLoader;
-using MelonLoader.TinyJSON;
 using UnityEngine.Tilemaps;
-using static UnityEngine.RuleTile.TilingRuleOutput;
-using System.Runtime.ConstrainedExecution;
 using UnityEngine.SceneManagement;
 using System.Reflection;
-using System.Globalization;
 using System.Collections;
+using UnityEngine.UI;
+using TMPro;
+using HarmonyLib;
 
 namespace LevelEditor.Main
 {
@@ -23,15 +22,179 @@ namespace LevelEditor.Main
         public int width;
         public int height;
         public GameObject win;
-
-        public override void OnApplicationStart()
+        public string input;
+        public override void OnSceneWasLoaded(int buildIndex, string sceneName)
         {
-            SetTilesInSet();
-            pallete = LoadPaletteFromFile("Test");
-            width = int.Parse(LoadRules("Test")[1]);
-            height = int.Parse(LoadRules("Test")[2]);
+            if (sceneName == "Moonlight District")
+            {
+                MelonLogger.Msg("MD Loaded, running");
+                MelonCoroutines.Start(WaitAndDoSomething());
+            }
+            if (buildIndex == 0)
+            {
+                CreateUI();
+            }
         }
+        private IEnumerator WaitAndDoSomething()
+        {
+            // Wait for 1 second
+            yield return new WaitForSeconds(1f);
+            SetAll(input);
+            GameObject pd = GameObject.Find("Death Collider");
+            PlayerDeath pds = pd.GetComponent<PlayerDeath>();
+            pds.DieSilent();
+        }
+        private void CreateUI()
+        {
+            // Get the TMP_FontAsset from the Play Button text
+            GameObject play = GameObject.Find("Play Button");
+            TMP_Text playText = play.GetComponentInChildren<TMP_Text>();
+            TMP_FontAsset tf = playText.font; // Use this TMP_FontAsset for all TMP_Text components
+            GameObject canvasObject = null;
 
+            // Create a canvas
+            GameObject[] allObjects = GameObject.FindObjectsOfType<GameObject>(true); // true includes inactive objects
+            foreach (GameObject obj in allObjects)
+            {
+                if (obj.name == "WORLD SELECT")
+                {
+                    canvasObject = obj;
+                }
+            }
+
+            canvasObject.AddComponent<GraphicRaycaster>();
+
+            // Create a title text object (using TextMeshProUGUI for UI text)
+            GameObject titleObject = new GameObject("TitleText");
+            titleObject.transform.SetParent(canvasObject.transform, false);
+
+            TextMeshProUGUI titleText = titleObject.AddComponent<TextMeshProUGUI>(); // Use TextMeshProUGUI here
+            titleText.text = "Load Custom Level";
+            titleText.alignment = TextAlignmentOptions.Center;
+            titleText.fontSize = 20;
+            titleText.font = tf; // Set the TMP_FontAsset here
+            titleText.color = new Color(1, 0.812f, 0.004f, 1);
+
+            RectTransform titleRect = titleText.GetComponent<RectTransform>();
+            titleRect.anchorMin = new Vector2(0, 0);
+            titleRect.anchorMax = new Vector2(0, 0);
+            titleRect.pivot = new Vector2(0, 0);
+            titleRect.sizeDelta = new Vector2(300, 50);
+            titleRect.anchoredPosition = new Vector2(20 - 130 + 10, 120 + 40); // Move 130 left, 40 up, and 10 right
+
+            // Create an input field (TMP_InputField)
+            GameObject inputFieldObject = new GameObject("InputField");
+            RectTransform inputFieldRect = inputFieldObject.AddComponent<RectTransform>();
+            inputFieldObject.transform.SetParent(canvasObject.transform, false);
+
+            inputFieldRect.anchorMin = new Vector2(0, 0);
+            inputFieldRect.anchorMax = new Vector2(0, 0);
+            inputFieldRect.pivot = new Vector2(0, 0);
+            inputFieldRect.sizeDelta = new Vector2(300, 50);
+            inputFieldRect.anchoredPosition = new Vector2(20 - 130 + 10, 80 + 40); // Move 130 left, 40 up, and 10 right
+
+            // Add Image for background styling
+            Image inputFieldBackground = inputFieldObject.AddComponent<Image>();
+            inputFieldBackground.color = new Color(1, 0.812f, 0.004f, 1); // Yellow background
+
+            // Add TMP_InputField component
+            TMP_InputField inputField = inputFieldObject.AddComponent<TMP_InputField>();
+
+            // Add a Text object as InputField's Text Component (use TextMeshProUGUI here)
+            GameObject inputTextObject = new GameObject("InputText");
+            inputTextObject.transform.SetParent(inputFieldObject.transform, false);
+
+            TextMeshProUGUI inputText = inputTextObject.AddComponent<TextMeshProUGUI>(); // Use TextMeshProUGUI here
+            inputText.font = tf; // Set TMP_FontAsset here
+            inputText.color = Color.black;
+            inputText.alignment = TextAlignmentOptions.Left;
+            inputText.fontSize = 20;
+
+            RectTransform inputTextRect = inputText.GetComponent<RectTransform>();
+            inputTextRect.anchorMin = new Vector2(0, 0);
+            inputTextRect.anchorMax = new Vector2(1, 1);
+            inputTextRect.offsetMin = new Vector2(10, 5); // Add padding inside the input field
+            inputTextRect.offsetMax = new Vector2(-10, -5);
+            inputField.textComponent = inputText; // Assign as the text component
+
+            // Add Placeholder Text (use TextMeshProUGUI here)
+            GameObject placeholderObject = new GameObject("Placeholder");
+            placeholderObject.transform.SetParent(inputFieldObject.transform, false);
+
+            TextMeshProUGUI placeholderText = placeholderObject.AddComponent<TextMeshProUGUI>(); // Use TextMeshProUGUI here
+            placeholderText.text = "Enter level name...";
+            placeholderText.font = tf; // Set TMP_FontAsset here
+            placeholderText.color = Color.gray;
+            placeholderText.alignment = TextAlignmentOptions.Left;
+            placeholderText.fontSize = 20;
+
+            RectTransform placeholderRect = placeholderText.GetComponent<RectTransform>();
+            placeholderRect.anchorMin = new Vector2(0, 0);
+            placeholderRect.anchorMax = new Vector2(1, 1);
+            placeholderRect.offsetMin = new Vector2(10, 5); // Add padding inside the placeholder
+            placeholderRect.offsetMax = new Vector2(-10, -5);
+            inputField.placeholder = placeholderText; // Assign as the placeholder
+
+            // Add a border around the input field
+            Outline inputFieldOutline = inputFieldObject.AddComponent<Outline>();
+            inputFieldOutline.effectColor = Color.black;
+            inputFieldOutline.effectDistance = new Vector2(2, 2);
+
+            // Create a button (TMP_Button is not needed, but we can keep it as a regular Button)
+            GameObject buttonObject = new GameObject("Button");
+            RectTransform buttonRect = buttonObject.AddComponent<RectTransform>();
+            buttonObject.transform.SetParent(canvasObject.transform, false);
+
+            buttonRect.anchorMin = new Vector2(0, 0);
+            buttonRect.anchorMax = new Vector2(0, 0);
+            buttonRect.pivot = new Vector2(0, 0);
+            buttonRect.sizeDelta = new Vector2(300, 50);
+            buttonRect.anchoredPosition = new Vector2(20 - 130 + 10, 20 + 40); // Move 130 left, 40 up, and 10 right
+
+            // Add Image for background styling
+            Image buttonBackground = buttonObject.AddComponent<Image>();
+            buttonBackground.color = new Color(1, 0.812f, 0.004f, 1); // Yellow background
+
+            // Add Button component
+            Button button = buttonObject.AddComponent<Button>();
+
+            // Add Text component to display button label (use TextMeshProUGUI here)
+            GameObject buttonTextObject = new GameObject("ButtonText");
+            buttonTextObject.transform.SetParent(buttonObject.transform, false);
+
+            TextMeshProUGUI buttonText = buttonTextObject.AddComponent<TextMeshProUGUI>(); // Use TextMeshProUGUI here
+            buttonText.text = "Submit";
+            buttonText.alignment = TextAlignmentOptions.Center;
+            buttonText.font = tf; // Set TMP_FontAsset here
+            buttonText.color = Color.black;
+
+            RectTransform textRect = buttonText.GetComponent<RectTransform>();
+            textRect.sizeDelta = new Vector2(300, 50);
+            textRect.anchoredPosition = Vector2.zero;
+
+            // Add a border around the button
+            Outline buttonOutline = buttonObject.AddComponent<Outline>();
+            buttonOutline.effectColor = Color.black;
+            buttonOutline.effectDistance = new Vector2(2, 2);
+
+            // Hook up button click event
+            button.onClick.AddListener(() =>
+            {
+                string input = inputField.text;
+                MelonLogger.Msg($"Input received: {input}");
+                OnButtonClick(input); // Pass the input field text to the OnButtonClick function
+            });
+        }
+        // Function that gets called with the text box input
+        private void OnButtonClick(string userInput)
+        {
+            input = userInput;
+            SetTilesInSet(userInput);
+            pallete = LoadPaletteFromFile(userInput);
+            width = int.Parse(LoadRules(userInput)[1]);
+            height = int.Parse(LoadRules(userInput)[2]);
+            StartLoadAndGetWin();
+        }
         public List<string> LoadRules(string folderName)
         {
             string modsFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Mods", "Levels", folderName);
@@ -149,9 +312,9 @@ namespace LevelEditor.Main
             return palette;
         }
 
-        public void SetTilesInSet()
+        public void SetTilesInSet(string name)
         {
-            List<string> temp = LoadTilePosFile("Test");
+            List<string> temp = LoadTilePosFile(name);
             if (temp == null || temp.Count == 0)
             {
                 MelonLogger.Error("Failed to load lines from the file or the file is empty.");
@@ -217,12 +380,12 @@ namespace LevelEditor.Main
             MelonLogger.Msg("All tiles cleared manually and Tilemap refreshed.");
         }
 
-        public void SetAll()
+        public void SetAll(string userInput)
         {
             MelonLogger.Msg("SetAll method called.");
-            SetStartPos(new Vector2(float.Parse(LoadRules("Test")[3]), float.Parse(LoadRules("Test")[4])));
+            SetStartPos(new Vector2(float.Parse(LoadRules(userInput)[3]), float.Parse(LoadRules(userInput)[4])));
             // Try to find the Tilemap GameObject
-            string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Mods", "Levels", "Test", "other.txt");
+            string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Mods", "Levels", userInput, "other.txt");
             string[] lines = File.ReadAllLines(filePath);
             foreach (string line in lines)
             {
@@ -415,7 +578,6 @@ namespace LevelEditor.Main
                     break;
             }
         }
-
         // Example functions to handle commands
         void HandleWin(int param1, int param2)
         {
@@ -520,23 +682,13 @@ namespace LevelEditor.Main
             SceneManager.LoadScene("Moonlight District");
             Debug.Log($"Win is now {(win != null ? "not null" : "null")}");
         }
-
-
-        public override void OnUpdate()
+    }
+    [HarmonyPatch(typeof(CheatCodeManager), "Update")]
+    static class patch
+    {
+        static bool Prefix()
         {
-            if (Input.GetKeyDown(KeyCode.Y))
-            {
-                StartLoadAndGetWin();
-                MelonLogger.Msg(win != null);
-            }
-            if (Input.GetKeyDown(KeyCode.T))
-            {
-                MelonLogger.Msg("Key T pressed");
-                SetAll();
-                GameObject pd = GameObject.Find("Death Collider");
-                PlayerDeath pds = pd.GetComponent<PlayerDeath>();
-                pds.DieSilent();
-            }
+            return false;
         }
     }
 }
