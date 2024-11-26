@@ -51,9 +51,6 @@
     <Reference Include="Unity.2D.Tilemap.Extras">
       <HintPath>E:\SteamLibrary\steamapps\common\Thunder Jumper\Thunder Jumper_Data\Managed\Unity.2D.Tilemap.Extras.dll</HintPath>
     </Reference>
-    <Reference Include="Unity.InputSystem">
-      <HintPath>E:\SteamLibrary\steamapps\common\Thunder Jumper\Thunder Jumper_Data\Managed\Unity.InputSystem.dll</HintPath>
-    </Reference>
     <Reference Include="Unity.TextMeshPro, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>E:\SteamLibrary\steamapps\common\Thunder Jumper\Thunder Jumper_Data\Managed\Unity.TextMeshPro.dll</HintPath>

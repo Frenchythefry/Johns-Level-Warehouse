@@ -18,6 +18,7 @@ namespace LevelEditor.Main
     {
         public List<Tile> pallete = new List<Tile>();
         public List<List<int>> tiles = new List<List<int>>();
+        public List<List<int>> tilesMetal = new List<List<int>>();
         public Tilemap tileMap; // Grid > Tilemap GameObject
         public Tilemap InvisWalls; // Grid > Tilemap Invisible Wall
         public int width;
@@ -191,6 +192,7 @@ namespace LevelEditor.Main
         {
             input = userInput;
             SetTilesInSet(userInput);
+            SetMetalTilesInSet(userInput);
             pallete = LoadPaletteFromFile(userInput);
             width = int.Parse(LoadRules(userInput)[1]);
             height = int.Parse(LoadRules(userInput)[2]);
@@ -247,6 +249,35 @@ namespace LevelEditor.Main
                     // Read all lines from the file
                     lines = new List<string>(File.ReadAllLines(filePath));
                     MelonLogger.Msg($"File 'tilepos.txt' loaded successfully from folder '{folderName}'.");
+                }
+                catch (Exception ex)
+                {
+                    MelonLogger.Error($"An error occurred while loading the file: {ex.Message}");
+                }
+            }
+            else
+            {
+                MelonLogger.Warning($"File 'tilepos.txt' not found in folder '{folderName}' inside the mods directory.");
+            }
+
+            return lines;
+        }
+        public List<string> LoadTilePosMetalFile(string folderName)
+        {
+            // Define the path to the specified folder inside the mods folder
+            string modsFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Mods", "Levels", folderName);
+            string filePath = Path.Combine(modsFolder, "tileposGrapple.txt");
+            MelonLogger.Msg($"Loading file from path: {filePath}");
+            List<string> lines = new List<string>();
+
+            // Check if the file exists
+            if (File.Exists(filePath))
+            {
+                try
+                {
+                    // Read all lines from the file
+                    lines = new List<string>(File.ReadAllLines(filePath));
+                    MelonLogger.Msg($"File 'tileposMetal.txt' loaded successfully from folder '{folderName}'.");
                 }
                 catch (Exception ex)
                 {
@@ -318,6 +349,35 @@ namespace LevelEditor.Main
             return palette;
         }
 
+        public void SetMetalTilesInSet(string name)
+        {
+            List<string> temp = LoadTilePosMetalFile(name);
+            if (temp == null || temp.Count == 0)
+            {
+                MelonLogger.Error("Failed to load lines from the file or the file is empty.");
+                return;
+            }
+
+            List<List<int>> fullTemp = new List<List<int>>();
+
+            foreach (string item in temp)
+            {
+                // Split the string by commas and trim any whitespace
+                List<int> splitList = new List<int>();
+                foreach (string str in item.Split(','))
+                {
+                    if (int.TryParse(str.Trim(), out int result))
+                    {
+                        splitList.Add(result);
+                    }
+                }
+
+                // Add the split list to the 2D list
+                fullTemp.Add(splitList);
+            }
+
+            tilesMetal = fullTemp;
+        }
         public void SetTilesInSet(string name)
         {
             List<string> temp = LoadTilePosFile(name);
@@ -399,7 +459,7 @@ namespace LevelEditor.Main
             }
             GameObject tilemapGameObject = GameObject.Find("Tilemap Gameobject");
             GameObject coverT = GameObject.Find("Ground Cover");
-
+            GameObject coverTM = GameObject.Find("Ground Cover Metal");
             if (tilemapGameObject == null)
             {
                 MelonLogger.Error("Tilemap GameObject not found.");
@@ -412,6 +472,7 @@ namespace LevelEditor.Main
             // Try to get the Tilemap component
             tileMap = tilemapGameObject.GetComponent<Tilemap>();
             Tilemap gct = coverT.GetComponent<Tilemap>();
+            Tilemap gctm = coverTM.GetComponent<Tilemap>();
 
             if (tileMap == null)
             {
@@ -431,6 +492,7 @@ namespace LevelEditor.Main
             }
             PrepMD();
             GroundCoverController gcc = coverT.GetComponent<GroundCoverController>();
+            GroundCoverController gccm = coverTM.GetComponent<GroundCoverController>();
             for (int i = 0; i < height; i++)
             {
                 for (int j = 0; j < width; j++)
@@ -441,6 +503,30 @@ namespace LevelEditor.Main
                         {
                             tileMap.SetTile(new Vector3Int(j, i, 0), pallete[tiles[i][j]]);
                             gct.SetTile(new Vector3Int(j, i, 0), gcc.groundTile);
+                            GameObject temp = new GameObject();
+                            temp.transform.parent = tileMap.transform;
+                            temp.transform.localScale = new Vector3(0.5f, 1, 0.5f);
+                            temp.tag = "Rubber";
+                            temp.layer = 8;
+                            temp.transform.position = new Vector3Int(j, i, 0);
+                        }
+                    }
+                    else
+                    {
+                        MelonLogger.Error($"Index out of range: i={i}, j={j}");
+                    }
+                }
+            }
+            for (int i = 0; i < height; i++)
+            {
+                for (int j = 0; j < width; j++)
+                {
+                    if (i < tiles.Count && j < tiles[i].Count)
+                    {
+                        if (tilesMetal[i][j] != 0)
+                        {
+                            tileMap.SetTile(new Vector3Int(j, i, 0), pallete[tilesMetal[i][j]]);
+                            gctm.SetTile(new Vector3Int(j, i, 0), gccm.groundTile);
                             GameObject temp = new GameObject();
                             temp.transform.parent = tileMap.transform;
                             temp.transform.localScale = new Vector3(0.5f, 1, 0.5f);
